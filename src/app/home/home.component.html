@@ -1,0 +1,145 @@
+<!-- Add new machine -->
+<div class="col-md-12 my-4 animate__animated animate__fadeInDown" *ngIf="newMachine.visible">
+    <div class="card w-100">
+        <div class="card-header">
+            <h3 class="card-title">Create a new machine</h3>
+            <p class="card-text">Add a new machine, just provide a label (name), the ip address, the operating system,
+                and the access credentials (The SSH credentials of Linux/Unix machines, the WinRM credentials for Windows machines)
+            </p>
+        </div>
+        <div class="card-body">
+            <div class="form-group">
+                <label for="name">Label (name) :</label>
+                <input type="text" id="name" [(ngModel)]="newMachine.name" class="form-control" placeholder="Central web server #1">
+            </div>
+            <div class="form-group">
+                <label for="ip_addr">Ip Address</label>
+                <input type="text" id="ip_addr" [(ngModel)]="newMachine.ip_addr" class="form-control" placeholder="15.63.88.44">
+            </div>
+            <div class="form-group">
+                <label for="os">OS :</label>
+                <select [(ngModel)]="newMachine.os"   id="os" class="form-control">
+                    <option value="linux">Linux/Unix</option>
+                    <option value="windows">Windows</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="access_user">Access User :</label>
+                <input type="text" id="access_user" [(ngModel)]="newMachine.access_user"   class="form-control" placeholder="JohnDoe">
+                <small class="form-text text-muted">Please provide the ssh credentials if this is linux machine, or winrm credentials for windows.</small>
+            </div>
+            <div class="form-group">
+                <label for="access_user">Access Password :</label>
+                <input type="password" id="access_pass" [(ngModel)]="newMachine.access_pass"   class="form-control" placeholder="Password..">
+                <small class="form-text text-muted">Please provide the ssh credentials if this is linux machine, or winrm credentials for windows.</small>
+            </div>
+            
+            <div class="row w-100 justify-content-end">
+                <button class="btn btn-danger mr-2" (click)="clearNewMachine()">Cancel</button>
+                <button class="btn btn-primary mr-2" (click)="addNewMachine()">Add new machine</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add new machine rule -->
+<div class="col-md-12 my-4 animate__animated animate__fadeInDown" *ngIf="newMachineRule.visible">
+    <div class="card w-100">
+        <div class="card-header">
+            <h3 class="card-title">Add new rule to the <b>{{newMachineRule.machine.name}}</b> Machine</h3>
+            <p class="card-text">
+                Add costumized compliance rules to you test from our diverse set of resources
+            </p>
+        </div>
+        <div class="card-body">
+            <div class="accordion">
+                <div class="card" *ngFor="let resource of resources.data">
+                  <div class="card-header" data-toggle="collapse" [attr.data-target]="'#resource-' + resource.id" aria-expanded="false">
+                    <h2 class="mb-0">{{resource.name| titlecase }}</h2>
+                    <p class="card-text">{{resource.description| titlecase }}</p>
+                  </div>
+              
+                  <div id="resource-{{resource.id}}" class="collapse">
+                    <div class="card-body m-4">
+                      <div class="row" *ngFor="let rsc_input of resource.inputs">
+                        <label>{{ rsc_input.title| titlecase }}</label>
+                        <div class="input-group mb-3 w-100" >
+                            <input type="text" id="rsc-input-{{rsc_input.id}}" class="form-control">
+                        </div>    
+                      </div>
+
+                      <div class="row" *ngFor="let rsc_rule of resource.rules">
+                          <label>{{ rsc_rule.description | titlecase }}</label>
+                          <div class="input-group mb-3" [class.w-100]="rsc_rule.input" [class.w-25]="!rsc_rule.input">
+                            <input type="text" id="rsc-rule-{{rsc_rule.id}}"  class="form-control" *ngIf="rsc_rule.input">
+                            <div [class.input-group-append]="rsc_rule.input" [class.ml-2]="!rsc_rule.input">
+                                <button class="btn btn-primary" (click)="addRuleToMachine(resource,rsc_rule,newMachineRule.machine)">Add</button>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- All the machines -->
+<div class="col-md-12 mx-auto mt-4">
+    <div class="card w-100">
+        <div class="card-body mx-4 my-2">
+            <div class="row mb-2">
+                <h2 class="card-title">Machines</h2>
+                <p class="card-description">You can find here all the tracked machines along with all the tracked rules and their statuses, if you wish to add a new machine click on the <i class="fa fa-plus text-primary"></i> Sign</p>
+            </div>
+
+            <div class="row w-100 justify-content-center p-1" *ngIf="machines.loaded">
+
+                <!-- display the users machines -->
+                <div class="card col-md-5 mr-5 mb-2 text-white bg-dark" *ngFor="let machine of machines.data">
+                    <div class="card-header row align-items-center">
+                        <i class="fa fa-{{machine.os}} mr-2"></i>
+                        <h4 class="card-description mb-0">{{ machine.name }}</h4>
+                    </div>
+                    <div class="card-body d-flex flex-column align-items-center">
+                        <img src="../../assets/images/033-web-hosting.png" height="150" class="my-2" alt="">
+                        <h4 class="mt-1 text-center">{{machine.ip_addr}}</h4>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item bg-dark h5 text-description row">
+                            Rules : 
+                            <button class="btn btn-primary float-right" (click)="addNewRule(machine)"><i class="fa fa-plus m-0"></i></button>
+                        </li>
+                        <li class="list-group-item bg-dark text-description row" *ngFor="let rule of machine.rules">
+                            <span *ngIf="rule.respected && rule.loaded">
+                                <img src="../../assets/lb-on.png"  height="8" class="mr-2" alt="">
+                                Respected :
+                            </span>
+                            <span *ngIf="!rule.respected && rule.loaded">
+                                <img src="../../assets/lb-off.png"  height="8" class="mr-2" alt="">
+                                Violated :
+                            </span>
+                            <span *ngIf="!rule.loaded">
+                                <img src="../../assets/lb-timeout.png"  height="8" class="mr-2" alt="">
+                                Loading :
+                            </span>
+                            {{ rule.description }}
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Add new machine button -->
+                <div class="card col-md-5 addNewMachine mb-2 text-white bg-primary" (click)="openNewMachine()">
+                    <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                        <i class="fa fa-plus fa-5x"></i>
+                        <h3 class="card-text">Add new machine</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- animate__animated animate__fadeInUp -->
